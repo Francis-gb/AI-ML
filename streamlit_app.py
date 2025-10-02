@@ -3,10 +3,13 @@ import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# 🔗 Backend API endpoint
+API_URL = "https://heatstress-backend.onrender.com/predict"
+
 st.set_page_config(page_title="Singapore Heat Stress Predictor", layout="centered")
 st.title("🌡️ Singapore Heat Stress Predictor")
 
-st.markdown("This app uses real-time NEA sensor data to predict WBGT for different time horizons.")
+st.markdown("This app uses real-time NEA sensor data to forecast WBGT at 3h, 6h & 12h.")
 
 horizons = ["Now", "3h", "6h", "12h"]
 results = []
@@ -14,13 +17,15 @@ inputs = {}
 
 if st.button("Predict WBGT"):
     for h in horizons:
-        response = requests.post("http://127.0.0.1:8000/predict", json={"horizon": h})
-        if response.status_code == 200:
+        try:
+            response = requests.post(API_URL, json={"horizon": h}, timeout=10)
+            response.raise_for_status()
             data = response.json()
             results.append((h, data["wbgt_prediction"]))
             if h == "Now":
                 inputs = data["inputs"]
-        else:
+        except Exception as e:
+            st.error(f"Error fetching prediction for {h}: {e}")
             results.append((h, None))
 
     # 🧾 Display live inputs
@@ -33,7 +38,6 @@ if st.button("Predict WBGT"):
     st.subheader("📈 WBGT Forecast")
     df = pd.DataFrame(results, columns=["Horizon", "WBGT"])
 
-    # Define color mapping
     def wbgt_color(wbgt):
         if wbgt is None:
             return "gray"
@@ -58,7 +62,6 @@ if st.button("Predict WBGT"):
     ax.set_ylim(20, 45)
     ax.set_title("Predicted WBGT by Forecast Horizon")
 
-    # Annotate bars with WBGT values
     for bar, wbgt in zip(bars, df["WBGT"]):
         if wbgt is not None:
             ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, f"{wbgt:.1f}", ha='center', va='bottom')
