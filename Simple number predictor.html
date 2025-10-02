@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Neural Network Predictor</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 2em;
+      background: #f0f4f8;
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    input, button {
+      padding: 0.5em;
+      font-size: 1em;
+      margin: 1em;
+    }
+    #output {
+      font-weight: bold;
+      font-size: 1.2em;
+      color: #34495e;
+    }
+    canvas {
+      margin-top: 2em;
+    }
+  </style>
+</head>
+<body>
+  <h2>🔢 Predict y = 2x - 1 with a Neural Network</h2>
+  <input type="number" id="inputValue" placeholder="Enter x value" />
+  <button onclick="predict()">Predict</button>
+  <p id="output">Prediction will appear here</p>
+  <canvas id="predictionChart" width="400" height="200"></canvas>
+
+  <script>
+    // Define the model
+    const model = tf.sequential();
+    model.add(tf.layers.dense({units: 1, inputShape: [1]}));
+
+    // Set weights manually: y = 2x - 1
+    const weights = tf.tensor2d([[2]], [1, 1]);
+    const bias = tf.tensor1d([-1]);
+    model.layers[0].setWeights([weights, bias]);
+
+    // Chart setup
+    let chart = new Chart(document.getElementById('predictionChart'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Predicted y',
+          data: [],
+          borderColor: 'blue',
+          backgroundColor: 'rgba(0, 0, 255, 0.1)',
+          fill: true
+        }]
+      },
+      options: {
+        scales: {
+          x: { title: { display: true, text: 'Input x' } },
+          y: { title: { display: true, text: 'Predicted y' } }
+        }
+      }
+    });
+
+    function predict() {
+      const x = parseFloat(document.getElementById('inputValue').value);
+      if (isNaN(x)) return;
+
+      const inputTensor = tf.tensor2d([x], [1, 1]);
+      const outputTensor = model.predict(inputTensor);
+      outputTensor.array().then(result => {
+        const y = parseFloat(result[0][0].toFixed(2));
+        document.getElementById('output').innerText = `Predicted y: ${y}`;
+
+        chart.data.labels.push(x);
+        chart.data.datasets[0].data.push(y);
+        chart.update();
+      });
+    }
+  </script>
+</body>
+</html>
