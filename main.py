@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import numpy as np
 
 app = FastAPI()
-model = joblib.load("wbgt_model.pkl")
+model = joblib.load("wbgt_model_v2.pkl")
 
 class ForecastRequest(BaseModel):
     horizon: str  # "Now", "3h", "6h", "12h"
